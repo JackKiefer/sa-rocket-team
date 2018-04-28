@@ -6,8 +6,8 @@ import numpy as np
 import math
 
 a = 1.704
-b = 1.960
-c = 1.656
+c = 1.960
+b = 1.656
 d = 1.651
 
 l = 0.875
@@ -20,6 +20,7 @@ Ft = 223
 
 point0A = (0,0)
 pointAB = (0, -a)
+pointD0 = (l,0)
 
 pointBC = (float('nan'),float('nan'))
 
@@ -28,8 +29,11 @@ pointBC = (float('nan'),float('nan'))
 ### Begin computations ###
 ##########################
 
+def pointDistance((x1, y1), (x2, y2)):
+    return np.sqrt((x2 - x1)**2 + (y1 - y2)**2)
+
 def findIntersections(theta,pointCD):
-    distance = np.sqrt((pointCD[0] - pointAB[0])**2 + (pointAB[1]-pointCD[1])**2)
+    distance = pointDistance(pointAB, pointCD)
     nan = float('nan')
     if distance.any() > (b + c):
         print "No solutions; circles separate"
@@ -59,32 +63,45 @@ def findIntersections(theta,pointCD):
 def getPoints(theta0):
     theta = 90 - theta0
     pointCD = (d*np.cos(np.radians(-theta))+l,d*np.sin(np.radians(-theta)))
-
     [(p1x, p1y), (p2x, p2y)] = findIntersections(theta,pointCD)
-
     pointBC = (0,0)
     if min(p1y.any(),p2y.any()) == p1y.any():
         pointBC = (p1x,p1y)
     else:
         pointBC = (p2x,p2y)
-
     return (pointCD, pointBC)
 
-# Moment due to tension about the hinge D0
-def tensionMoment(pointBC):
-    # Perpendicular distance between BC and D0
-    Dp = abs(pointBC[0] - l)
-    return Ft*Dp
+def slope((x1, y1), (x2, y2)):
+    return (y2-y1)/(x2-x1)
 
-# Moment due to drag about the hinge D0
+def angleFromSlopes(m1, m2):
+    n = m1 - m2
+    d = 1 + m1*m2
+    return np.degrees(np.arctan(n/d))
+
+def lbfInchToNewtonMeter(x):
+    return x * 0.112984829 
+
+# Moment due to tension about the hinge CD
+def tensionMoment((pointCD, pointBC)):    
+    m1 = slope(pointBC, pointD0) 
+    m2 = slope(pointBC, pointCD) 
+    degAngle = angleFromSlopes(m1, m2)
+    return lbfInchToNewtonMeter(Ft*c*np.sin(np.radians(degAngle)))
+
+# Moment due to drag about the hinge CD
 def dragMoment(theta0):
-    return Fd*(np.sin(np.radians(-theta0)))**2
+    return lbfInchToNewtonMeter(Fd*(np.sin(np.radians(-theta0)))**2)
 
-"""
 theta = np.arange(0,90,0.2)
 plt.plot(theta, dragMoment(theta).astype(np.float), 'r--', label='Moment due to drag')
-plt.plot(theta, tensionMoment((getPoints(theta))[1]), 'b', label='Moment due to tension')
-plt.plot((60,60),(0,3),'k:')
+
+tensionMoments = []
+for angle in theta:
+    tensionMoments.append(tensionMoment(getPoints(angle)))
+
+plt.plot(theta, tensionMoments, 'b', label='Moment due to tension')
+#plt.plot((60,60),(0,3),'k:')
 
 red_line = mlines.Line2D([],[],color='r',ls='dashed',label='Moment due to drag')
 blue_line = mlines.Line2D([],[],color='b',label='Moment due to tension')
@@ -92,11 +109,11 @@ plt.legend(handles=[red_line,blue_line])
 
 plt.title("Moments about the hinge point")
 plt.xlabel("Air Brake angle (degrees)")
-plt.ylabel("Moment (dimensionless)")
+plt.ylabel("Moment (newton metres)")
+plt.grid()
 plt.show()
-"""
-"""
-theta = 0
+
+theta = 90
 pointCD, pointBC = getPoints(theta)
 
 print pointCD, pointBC
@@ -141,4 +158,3 @@ plt.annotate(r'$\Theta$ = '+str(theta), (1.5,0))
 plt.plot(*lines)
 
 plt.show()
-"""
