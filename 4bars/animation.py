@@ -88,7 +88,6 @@ def animate(i):
     cable.set_data([b.l / 2, x2[i]], [0, y2[i]])
 
     # Update the airbrake flap
-    xdistance = x1[i] - b.l
     airbrake.set_data([b.l, b.l + (x1[i] - b.l) * 2], [0, y1[i] * 2])
 
     # Update the theta

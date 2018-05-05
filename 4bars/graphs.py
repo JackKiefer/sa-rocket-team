@@ -1,8 +1,6 @@
 import matplotlib.lines as mlines
-from matplotlib import collections as mc
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 from bars import *
 
 ############################
