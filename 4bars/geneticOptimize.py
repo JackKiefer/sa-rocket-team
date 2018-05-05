@@ -1,5 +1,5 @@
 #    This file is a modified version of a DEAP example for the OneMax
-#    genetic algorithm. 
+#    genetic algorithm.
 #
 #    DEAP is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Lesser General Public License as
@@ -22,12 +22,12 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
-# Attribute generator 
+# Attribute generator
 #                      define 'attr_bool' to be an attribute ('gene').
 #                      We choose a random floating-point number
 #                      between the specified parameters. The parameters
@@ -38,15 +38,16 @@ toolbox.register("attr_bool", random.uniform, 0.000001, 3.1)
 #                         define 'individual' to be an individual
 #                         consisting of 4 'attr_bool' elements ('genes').
 #                         These represent the four bar lengths we're optimizing.
-toolbox.register("individual", tools.initRepeat, creator.Individual, 
-    toolbox.attr_bool, 4)
+toolbox.register("individual", tools.initRepeat, creator.Individual,
+                 toolbox.attr_bool, 4)
 
 # define the population to be a list of individuals
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 # Calculate all of the drag moments
-theta = np.arange(0,90,0.2)
+theta = np.arange(0, 90, 0.2)
 dragMoments = bars.dragMoment(theta).astype(np.float)
+
 
 # The goal ('fitness') function to be maximized.
 # Here, it is the average positive difference between the drag moments
@@ -61,7 +62,10 @@ def evaluateTorque(individual):
 
     tensionMoments = []
     for angle in theta:
-        tensionMoments.append(bars.tensionMoment(bars.getPoints(angle,barLengths),barLengths,optimizing=True))
+        tensionMoments.append(
+            bars.tensionMoment(
+                bars.getPoints(angle, barLengths), barLengths,
+                optimizing=True))
 
     diff = tensionMoments - dragMoments
 
@@ -70,6 +74,7 @@ def evaluateTorque(individual):
             return 0,
 
     return np.average(diff),
+
 
 #----------
 # Operator registration
@@ -92,6 +97,7 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 #----------
 
+
 def main():
     random.seed(64)
 
@@ -104,22 +110,22 @@ def main():
     #
     # MUTPB is the probability for mutating an individual
     CXPB, MUTPB = 0.5, 0.2
-    
+
     print("Start of evolution")
-    
+
     # Evaluate the entire population
     fitnesses = list(map(toolbox.evaluate, pop))
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
-    
+
     print("  Evaluated %i individuals" % len(pop))
 
-    # Extracting all the fitnesses of 
+    # Extracting all the fitnesses of
     fits = [ind.fitness.values[0] for ind in pop]
 
     # Variable keeping track of the number of generations
     g = 0
-    
+
     # Begin the evolution. 2 is the number of generations
     # (experimentally determined to be optimal for this problem;
     # feel free to tinker)
@@ -127,12 +133,12 @@ def main():
         # A new generation
         g = g + 1
         print("-- Generation %i --" % g)
-        
+
         # Select the next generation individuals
         offspring = toolbox.select(pop, len(pop))
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
-    
+
         # Apply crossover and mutation on the offspring
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
@@ -151,35 +157,36 @@ def main():
             if random.random() < MUTPB:
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
-    
+
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
-        
+
         print("  Evaluated %i individuals" % len(invalid_ind))
-        
+
         # The population is entirely replaced by the offspring
         pop[:] = offspring
-        
+
         # Gather all the fitnesses in one list and print the stats
         fits = [ind.fitness.values[0] for ind in pop]
-        
+
         length = len(pop)
         mean = sum(fits) / length
-        sum2 = sum(x*x for x in fits)
+        sum2 = sum(x * x for x in fits)
         std = abs(sum2 / length - mean**2)**0.5
-        
+
         print("  Min %s" % min(fits))
         print("  Max %s" % max(fits))
         print("  Avg %s" % mean)
         print("  Std %s" % std)
-    
+
     print("-- End of (successful) evolution --")
-    
+
     best_ind = tools.selBest(pop, 1)[0]
     print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
+
 
 if __name__ == "__main__":
     main()
